@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MyHTTPClient {
-    private static final String API_KEY = "your_api_key_here"; // Change this to your API key
+    private static final String API_KEY = "123"; // Change this to your API key
 
     public static void main(String[] args) {
         String server = "localhost"; // Change this to your server address
