@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class HttpServer {
-    private static final int DEFAULT_PORT = 8080; // Default port number
+    private static final int DEFAULT_PORT = 80; // Default port number
     private static final String EXPECTED_API_KEY = "your_expected_api_key_here"; // Change this to your expected API key
 
     public static void main(String[] args) {

@@ -10,8 +10,8 @@ public class MyHTTPClient {
     private static final String API_KEY = "your_api_key_here"; // Change this to your API key
 
     public static void main(String[] args) {
-        String server = "localhost"; // Change this to your server address
-        int port = 8080; // Change this to your server port
+        String server = "httpusjproject.free.beeceptor.com"; // Change this to your server address
+        int port = 80; // Change this to your server port
 
         // HTTP request parameters
         String method = "POST"; // Change this to any HTTP method you want to use
