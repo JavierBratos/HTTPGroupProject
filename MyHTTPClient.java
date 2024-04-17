@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -5,25 +6,47 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class MyHTTPClient {
-    private static final String API_KEY = "123"; // Change this to your API key
-
     public static void main(String[] args) {
-        String server = "httpusjproject.free.beeceptor.com"; // Change this to your server address
-        int port = 80; // Change this to your server port
+        Scanner scanner = new Scanner(System.in);
 
-        // HTTP request parameters
-        String method = "POST"; // Change this to any HTTP method you want to use
-        String endpoint = "/cats"; // Change this to the desired endpoint
-        String body = "{\"name\": \"Hercules\", \"breed\": \"European\", \"age\": 3}"; // Example request body
+        // Ask for server address
+        System.out.print("Enter server address: ");
+        String server = scanner.nextLine();
 
-        // Custom headers including API key
+        // HTTP method
+        System.out.print("Enter HTTP method (GET, POST, PUT, DELETE, HEAD): ");
+        String method = scanner.nextLine().toUpperCase();
+
+        // Endpoint
+        System.out.print("Enter endpoint: ");
+        String endpoint = scanner.nextLine();
+
+        // Body
+        System.out.print("Enter body (if any, press Enter if none): ");
+        String body = scanner.nextLine();
+
+        // Custom headers
         Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", "application/json");
-        headers.put("X-API-Key", API_KEY);
+        System.out.print("Enter x-api-key header value: ");
+        String apiKey = scanner.nextLine();
+        headers.put("x-api-key", apiKey);
+        System.out.print("Enter x-forwarded-host header value: ");
+        String forwardedHost = scanner.nextLine();
+        headers.put("x-forwarded-host", forwardedHost);
+        System.out.print("Enter x-forwarded-proto header value: ");
+        String forwardedProto = scanner.nextLine();
+        headers.put("x-forwarded-proto", forwardedProto);
 
+        // Always use port 80
+        int port = 80;
+
+        // Send the request
         sendRequest(server, port, method, endpoint, headers, body);
+        
+        scanner.close();
     }
 
     public static void sendRequest(String server, int port, String method, String endpoint, Map<String, String> headers, String body) {
@@ -38,7 +61,10 @@ public class MyHTTPClient {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
                 requestBuilder.append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");
             }
-            requestBuilder.append("Content-Length: ").append(body.length()).append("\r\n");
+            if (!body.isEmpty()) {
+                requestBuilder.append("Content-Length: ").append(body.length()).append("\r\n");
+            }
+            requestBuilder.append("Content-Type: text/plain\r\n"); // Set content type to text/plain
             requestBuilder.append("\r\n");
             requestBuilder.append(body);
 
