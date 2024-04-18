@@ -5,19 +5,26 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class HttpServer {
-    private static final int DEFAULT_PORT = 80; // Default port number
-    private static final String EXPECTED_API_KEY = "your_expected_api_key_here"; // Change this to your expected API key
+    private static final int DEFAULT_PORT = 8080; // Default port number
+    private static final String EXPECTED_API_KEY = "123"; // Change this to your expected API key
 
-    public static void main(String[] args) {
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
-        HttpServer server = new HttpServer();
-        server.start(port);
+    // Map to store registered handlers for different HTTP methods and endpoints
+    private Map<String, Map<String, Handler>> routeHandlers = new HashMap<>();
+
+    // Register handlers for different HTTP methods and endpoints
+    public void on(String method, String endpoint, Handler handler) {
+        Map<String, Handler> methodHandlers = routeHandlers.getOrDefault(method, new HashMap<>());
+        methodHandlers.put(endpoint, handler);
+        routeHandlers.put(method, methodHandlers);
     }
 
+    // Start the server
     public void start(int port) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server is listening on port " + port);
@@ -32,7 +39,8 @@ public class HttpServer {
         }
     }
 
-    private static class RequestHandler implements Runnable {
+    // Handler for incoming requests
+    private class RequestHandler implements Runnable {
         private Socket socket;
 
         public RequestHandler(Socket socket) {
@@ -51,13 +59,26 @@ public class HttpServer {
                     request.append(line).append("\r\n");
                 }
 
+                // Extract method and endpoint from the request
+                String[] requestLines = request.toString().split("\r\n");
+                String[] firstLineParts = requestLines[0].split(" ");
+                String method = firstLineParts[0];
+                String endpoint = firstLineParts[1];
+
+                // Find handler for the requested method and endpoint
+                Handler handler = routeHandlers.getOrDefault(method, new HashMap<>()).get(endpoint);
+
                 // Process the request and generate response
                 String response;
-                if (validateApiKey(request.toString())) {
-                    response = processRequest(request.toString());
+                if (handler != null && validateApiKey(request.toString())) {
+                    response = handler.handle(request.toString());
                 } else {
                     response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized: Invalid API Key";
                 }
+
+                // Print request information
+                System.out.println("Request handled:");
+                System.out.println(request.toString());
 
                 // Send the response
                 writer.println(response);
@@ -72,23 +93,58 @@ public class HttpServer {
                 }
             }
         }
+    }
 
-        private boolean validateApiKey(String request) {
-            // Extract the API key from the request header
-            String[] lines = request.split("\r\n");
-            for (String line : lines) {
-                if (line.startsWith("X-API-Key:")) {
-                    String apiKey = line.substring("X-API-Key:".length()).trim();
-                    return apiKey.equals(EXPECTED_API_KEY);
-                }
+    // Handler interface
+    public interface Handler {
+        String handle(String request);
+    }
+
+    // Main method to start the server
+    public static void main(String[] args) {
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+        HttpServer server = new HttpServer();
+
+        // Register handlers for different endpoints and methods
+        server.on("GET", "/cats", request -> {
+            // Process GET /cats request and append request info to response
+            return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHandling GET /cats request\n" + request;
+        });
+
+        server.on("POST", "/cats", request -> {
+            // Process POST /cats request and append request info to response
+            return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHandling POST /cats request\n" + request;
+        });
+
+        server.on("PUT", "/cats", request -> {
+            // Process PUT /cats request and append request info to response
+            return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHandling PUT /cats request\n" + request;
+        });
+
+        server.on("DELETE", "/cats", request -> {
+            // Process DELETE /cats request and append request info to response
+            return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHandling DELETE /cats request\n" + request;
+        });
+
+        server.on("HEAD", "/cats", request -> {
+            // Process HEAD /cats request and append request info to response
+            return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHandling HEAD /cats request\n" + request;
+        });
+
+        // Start the server
+        server.start(port);
+    }
+
+    // API key validation method
+    private boolean validateApiKey(String request) {
+        // Extract the API key from the request header
+        String[] lines = request.split("\r\n");
+        for (String line : lines) {
+            if (line.startsWith("X-API-Key:")) {
+                String apiKey = line.substring("X-API-Key:".length()).trim();
+                return apiKey.equals(EXPECTED_API_KEY);
             }
-            return false;
         }
-
-        private String processRequest(String request) {
-            // Process the request here according to the server's logic
-            // For this example, just return a simple response
-            return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello from server!";
-        }
+        return false;
     }
 }
