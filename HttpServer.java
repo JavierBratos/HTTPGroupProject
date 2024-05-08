@@ -150,6 +150,7 @@ public class HttpServer {
     }
 }
 */
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -163,7 +164,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class HttpServer {
-    private static final int DEFAULT_PORT = 80; // Default port number
+    private static final int DEFAULT_PORT = 8080; // Default port number
     private static final String EXPECTED_API_KEY = "a123"; // Change this to your expected API key
 
     // Map to store registered handlers for different HTTP methods and endpoints
@@ -200,58 +201,54 @@ public class HttpServer {
         }
 
         @Override
-        public void run() {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                 PrintWriter writer = new PrintWriter(socket.getOutputStream())) {
+public void run() {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+         PrintWriter writer = new PrintWriter(socket.getOutputStream())) {
 
-                // Read the request
-                StringBuilder request = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null && !line.isEmpty()) {
-                    request.append(line).append("\r\n");
-                }
-
-                // Extract method and endpoint from the request
-                String[] requestLines = request.toString().split("\r\n");
-                String[] firstLineParts = requestLines[0].split(" ");
-                String method = firstLineParts[0];
-                String endpoint = firstLineParts[1];
-
-                // Extract body and content type from the request
-                String body = extractBody(request.toString());
-
-                // Find handler for the requested method and endpoint
-                Handler handler = routeHandlers.getOrDefault(method, new HashMap<>()).get(endpoint);
-
-                // Process the request and generate response
-                String response;
-                if (handler != null && validateApiKey(request.toString())) {
-                    response = handler.handle(request.toString());
-                } else {
-                    response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized: Invalid API Key";
-                }
-
-                // Print request information
-                System.out.println("Request handled:");
-                System.out.println("Method: " + method);
-                System.out.println("Endpoint: " + endpoint);
-                System.out.println("Body: " + body);
-                System.out.println(request.toString());
-
-                // Send the response
-                writer.println(response);
-                writer.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+        // Read the request
+        StringBuilder request = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            request.append(line).append("\r\n");
         }
 
+        // Extract method and endpoint from the request
+        String[] requestLines = request.toString().split("\r\n");
+        String[] firstLineParts = requestLines[0].split(" ");
+        String method = firstLineParts[0].toUpperCase(); // Normalize method to uppercase
+        String endpoint = firstLineParts[1];
+        endpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint; // Remove trailing slash
+
+        // Extract body and content type from the request
+        String body = extractBody(request.toString());
+
+        // Find handler for the requested method and endpoint
+        Handler handler = routeHandlers.getOrDefault(method, new HashMap<>()).get(endpoint);
+
+        // Debugging output
+        System.out.println("Looking for handler for method: " + method + ", endpoint: " + endpoint);
+
+        // Process the request and generate response
+        String response;
+        if (handler != null && validateApiKey(request.toString())) {
+            response = handler.handle(request.toString());
+        } else {
+            response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized: Invalid API Key";
+        }
+
+        // Send the response
+        writer.println(response);
+        writer.flush();
+    } catch (IOException e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
         private String extractBody(String request) {
             int bodyIndex = request.indexOf("\r\n\r\n");
             if (bodyIndex != -1 && bodyIndex + 4 < request.length()) {
@@ -259,6 +256,7 @@ public class HttpServer {
             }
             return "";
         }
+       
     }
 
     // Handler interface
@@ -306,8 +304,8 @@ public class HttpServer {
         // Extract the API key from the request header
         String[] lines = request.split("\r\n");
         for (String line : lines) {
-            if (line.startsWith("X-API-Key:")) {
-                String apiKey = line.substring("X-API-Key:".length()).trim();
+            if (line.startsWith("x-api-key:")) {
+                String apiKey = line.substring("x-api-key:".length()).trim();
                 return apiKey.equals(EXPECTED_API_KEY);
             }
         }

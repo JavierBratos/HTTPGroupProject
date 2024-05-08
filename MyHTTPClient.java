@@ -41,7 +41,7 @@ public class MyHTTPClient {
         headers.put("x-forwarded-proto", forwardedProto);
 
         // Always use port 80
-        int port = 80;
+        int port = 8080;
 
         // Send the request
         sendRequest(server, port, method, endpoint, headers, body);
@@ -64,7 +64,7 @@ public class MyHTTPClient {
             if (!body.isEmpty()) {
                 requestBuilder.append("Content-Length: ").append(body.length()).append("\r\n");
             }
-            requestBuilder.append("Content-Type: text/plain\r\n"); // Set content type to text/plain
+            requestBuilder.append("Content-Type: text/plain\r\n"); 
             requestBuilder.append("\r\n");
             requestBuilder.append(body);
 
