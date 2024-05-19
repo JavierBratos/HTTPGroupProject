@@ -14,7 +14,7 @@ public class MyHTTPClient {
         System.out.print("Enter body (if any, press Enter if none): ");
         String body = scanner.nextLine();
 
-        APIClient client = new APIClient(server, 8080);
+        API client = new API(server, 8080);
         String response = "";
         switch (method) {
             case "GET":

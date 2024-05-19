@@ -95,11 +95,11 @@ public class HttpServer {
         int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
         HttpServer server = new HttpServer();
 
-        server.on("GET", "/alumnos", () -> APIServer.handleGet("/alumnos"));
-        server.on("POST", "/alumnos", () -> APIServer.handlePost("/alumnos", "{json body}"));
-        server.on("PUT", "/alumnos", () -> APIServer.handlePut("/alumnos", "{json body}"));
-        server.on("DELETE", "/alumnos", () -> APIServer.handleDelete("/alumnos"));
-        server.on("HEAD", "/alumnos", () -> APIServer.handleHead("/alumnos"));
+        server.on("GET", "/alumnos", () -> API.handleGet("/alumnos"));
+        server.on("POST", "/alumnos", () -> API.handlePost("/alumnos", "{json body}"));
+        server.on("PUT", "/alumnos", () -> API.handlePut("/alumnos", "{json body}"));
+        server.on("DELETE", "/alumnos", () -> API.handleDelete("/alumnos"));
+        server.on("HEAD", "/alumnos", () -> API.handleHead("/alumnos"));
 
         server.start(port);
     }
