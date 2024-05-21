@@ -1,56 +1,68 @@
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Scanner;
-import java.util.Map;
-import java.util.HashMap;
 
 public class MyHTTPClient {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter server address: ");
-        String server = scanner.nextLine();
-        System.out.print("Enter HTTP method (GET, POST, PUT, DELETE, HEAD): ");
-        String method = scanner.nextLine().toUpperCase();
-        System.out.print("Enter endpoint (e.g., /alumnos or /alumnos/1): ");
-        String endpoint = scanner.nextLine();
-        System.out.print("Enter body (if any, press Enter if none): ");
-        String body = scanner.nextLine();
+        while (true) {
+            try {
+                System.out.print("Enter the full URL: ");
+                String urlString = scanner.nextLine();
+                System.out.print("Enter HTTP method (GET, POST, PUT, DELETE, HEAD): ");
+                String method = scanner.nextLine().toUpperCase();
+                URL url = new URL(urlString);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod(method);
 
-        API client = new API(server, 8080);
-        String response = "";
-        try {
-            int id = endpoint.startsWith("/alumnos/") ? Integer.parseInt(endpoint.split("/")[2]) : -1;
-            switch (method) {
-                case "GET":
-                    response = client.handleGet(endpoint);
-                    break;
-                case "POST":
-                    response = client.handlePost(endpoint,body);
-                    break;
-                case "PUT":
-                    if(id != -1) {
-                        response = client.handlePut(endpoint, body);
-                    } else {
-                        response = "Invalid endpoint for PUT request.";
+                // Headers
+                System.out.print("Add headers? (yes/no): ");
+                String headerResponse = scanner.nextLine().toLowerCase();
+                while (headerResponse.equals("yes")) {
+                    System.out.print("Enter header key: ");
+                    String key = scanner.nextLine();
+                    System.out.print("Enter header value: ");
+                    String value = scanner.nextLine();
+                    connection.setRequestProperty(key, value);
+                    System.out.print("Add more headers? (yes/no): ");
+                    headerResponse = scanner.nextLine().toLowerCase();
+                }
+
+                // Body
+                if ("POST".equals(method) || "PUT".equals(method)) {
+                    connection.setDoOutput(true);
+                    System.out.print("Enter body (JSON): ");
+                    String body = scanner.nextLine();
+                    try (OutputStream os = connection.getOutputStream()) {
+                        byte[] input = body.getBytes("utf-8");
+                        os.write(input, 0, input.length);
                     }
-                    break;
-                case "DELETE":
-                    if(id != -1) {
-                        response = client.handleDelete(endpoint);
-                    } else {
-                        response = "Invalid endpoint for DELETE request.";
+                }
+
+                connection.connect();
+
+                // Read response
+                StringBuilder response = new StringBuilder();
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+                    String responseLine = null;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
                     }
-                    break;
-                case "HEAD":
-                    response = client.handleHead(endpoint);
-                    break;
-                default:
-                    response = "Unsupported HTTP method.";
-                    break;
+                }
+
+                System.out.println("Response: " + response.toString());
+                System.out.println("Response Code: " + connection.getResponseCode());
+                System.out.println("Response Message: " + connection.getResponseMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (NumberFormatException e) {
-            response = "Error parsing ID in endpoint.";
-        }
 
-        System.out.println(response);
+            System.out.print("Send another request? (yes/no): ");
+            if (!scanner.nextLine().toLowerCase().equals("yes")) {
+                break;
+            }
+        }
         scanner.close();
     }
 }

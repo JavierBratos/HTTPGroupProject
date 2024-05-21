@@ -1,7 +1,5 @@
 import java.util.HashMap;
 import java.util.Map;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class DataServer {
     private Map<Integer, Alumno> alumnosDatabase;
@@ -10,39 +8,46 @@ public class DataServer {
         alumnosDatabase = new HashMap<>();
     }
 
-    // Method POST
+    // Adds an Alumno to the database
     public void addAlumno(Alumno alumno) {
         alumnosDatabase.put(alumno.getId(), alumno);
     }
 
-    // Not a method
+    // Retrieves an Alumno by ID
     public Alumno getAlumno(int id) {
         return alumnosDatabase.get(id);
     }
 
-    // Method DELETE
+    // Removes an Alumno from the database by ID
     public void removeAlumno(int id) {
         alumnosDatabase.remove(id);
     }
 
-    // Method PUT
+    // Updates an existing Alumno in the database
     public void updateAlumno(int id, Alumno updatedAlumno) {
         if (alumnosDatabase.containsKey(id)) {
             alumnosDatabase.put(id, updatedAlumno);
         }
     }
 
-    // Method GET
+    // Retrieves all Alumnos in a string format
     public String getAllAlumnos() {
-        JSONArray jsonArray = new JSONArray();
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
         for (Alumno alumno : alumnosDatabase.values()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id", alumno.getId());
-            jsonObject.put("name", alumno.getName());
-            jsonObject.put("lastname", alumno.getLastname());
-            jsonObject.put("phoneNumber", alumno.getPhoneNumber());
-            jsonArray.put(jsonObject);
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append("{");
+            sb.append("\"id\": ").append(alumno.getId()).append(", ");
+            sb.append("\"name\": \"").append(alumno.getName()).append("\", ");
+            sb.append("\"lastname\": \"").append(alumno.getLastname()).append("\", ");
+            sb.append("\"phoneNumber\": \"").append(alumno.getPhoneNumber()).append("\"");
+            sb.append("}");
+            first = false;
         }
-        return jsonArray.toString();
+        sb.append("]");
+        return sb.toString();
     }
 }

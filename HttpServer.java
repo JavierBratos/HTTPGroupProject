@@ -1,3 +1,4 @@
+/* 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -103,5 +104,104 @@ public class HttpServer {
         server.on("HEAD", "/alumnos", () -> server.api.handleHead("/alumnos"));
 
         server.start(port);
+    }
+}
+*/
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class HttpServer {
+    private static final int DEFAULT_PORT = 8080;
+    private API api; // API instance
+    private ExecutorService executorService = Executors.newCachedThreadPool();
+
+    public HttpServer(int port) {
+        this.api = new API("localhost", port); // Initialize API with server details
+        start(port);
+    }
+
+    private void start(int port) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server listening on port " + port);
+
+            while (true) {
+                Socket socket = serverSocket.accept();
+                executorService.submit(() -> handleRequest(socket));
+            }
+        } catch (IOException e) {
+            System.out.println("Server exception: " + e.getMessage());
+        }
+    }
+
+    private void handleRequest(Socket socket) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
+
+            String requestLine = reader.readLine();
+            if (requestLine == null || requestLine.isEmpty()) return;
+
+            String[] tokens = requestLine.split(" ");
+            if (tokens.length < 3) return;
+
+            String method = tokens[0];
+            String endpoint = tokens[1];
+            String headersAndBody = readHeadersAndBody(reader);
+
+            // Dispatch to API based on method and endpoint
+            String response = dispatchRequest(method, endpoint, headersAndBody);
+            writer.println(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Read headers and possible body from the request
+    private String readHeadersAndBody(BufferedReader reader) throws IOException {
+        StringBuilder headersAndBody = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            headersAndBody.append(line).append("\r\n");
+        }
+        while (reader.ready()) {
+            headersAndBody.append((char) reader.read());
+        }
+        return headersAndBody.toString();
+    }
+
+    // Dispatch requests to the API class
+    private String dispatchRequest(String method, String endpoint, String headersAndBody) {
+        switch (method) {
+            case "GET":
+                return api.handleGet(endpoint);
+            case "POST":
+                return api.handlePost(endpoint, extractBody(headersAndBody));
+            case "PUT":
+                return api.handlePut(endpoint, extractBody(headersAndBody));
+            case "DELETE":
+                return api.handleDelete(endpoint);
+            case "HEAD":
+                return api.handleHead(endpoint);
+            default:
+                return "HTTP/1.1 405 Method Not Allowed\r\n\r\nUnsupported method.";
+        }
+    }
+
+    // Extract the body from headers and body data if present
+    private String extractBody(String headersAndBody) {
+        return headersAndBody.substring(headersAndBody.indexOf("\r\n\r\n") + 4);
+    }
+
+    public static void main(String[] args) {
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+        new HttpServer(port);
     }
 }
