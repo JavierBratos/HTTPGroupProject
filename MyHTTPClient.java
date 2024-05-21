@@ -1,92 +1,161 @@
-import java.io.*;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
-public class MyHTTPClient {
+public class MyHTTPClient extends JFrame {
     private static final String API_KEY = "123"; // This should be your actual API key
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+    private JTextField serverField, endpointField, bodyField, headerKeyField, headerValueField;
+    private JComboBox<String> methodBox;
+    private JTextArea responseArea, headersArea;
+    private JButton sendButton, addHeaderButton;
+    private Map<String, String> headers;
 
-        System.out.print("Enter server address (e.g., httpusjproject.free.beeceptor.com): ");
-        String server = scanner.nextLine();
-        int port = 8080; // Standard HTTP port, change if necessary
+    public MyHTTPClient() {
+        setTitle("HTTP Client");
+        setSize(600, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-        while (true) {
-            System.out.print("Enter HTTP method (GET, POST, PUT, DELETE, HEAD): ");
-            String method = scanner.nextLine().toUpperCase();
+        headers = new HashMap<>();
+        headers.put("Content-Type", "text/plain");
+        headers.put("X-API-Key", API_KEY);
 
-            System.out.print("Enter endpoint (e.g., /cats): ");
-            String endpoint = scanner.nextLine();
+        // Set up the UI components
+        serverField = new JTextField(30);
+        endpointField = new JTextField(30);
+        bodyField = new JTextField(30);
+        headerKeyField = new JTextField(10);
+        headerValueField = new JTextField(10);
 
-            System.out.print("Enter body (if any, press Enter if none): ");
-            String body = scanner.nextLine();
+        String[] methods = { "GET", "POST", "PUT", "DELETE", "HEAD" };
+        methodBox = new JComboBox<>(methods);
 
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Content-Type", "text/plain");
-            headers.put("X-API-Key", API_KEY);
+        responseArea = new JTextArea(10, 50);
+        responseArea.setEditable(false);
 
-            System.out.print("Enter additional headers? (yes/no): ");
-            String response = scanner.nextLine().toLowerCase();
-            while (response.equals("yes")) {
-                System.out.print("Enter header key: ");
-                String key = scanner.nextLine();
-                System.out.print("Enter header value: ");
-                String value = scanner.nextLine();
-                headers.put(key, value);
+        headersArea = new JTextArea(5, 50);
+        headersArea.setEditable(false);
 
-                System.out.print("Add more headers? (yes/no): ");
-                response = scanner.nextLine().toLowerCase();
+        sendButton = new JButton("Send Request");
+        addHeaderButton = new JButton("Add Header");
+
+        // Set up the layout
+        setLayout(new BorderLayout());
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new GridLayout(10, 2));
+
+        inputPanel.add(new JLabel("Server:"));
+        inputPanel.add(serverField);
+        inputPanel.add(new JLabel("Method:"));
+        inputPanel.add(methodBox);
+        inputPanel.add(new JLabel("Endpoint:"));
+        inputPanel.add(endpointField);
+        inputPanel.add(new JLabel("Body:"));
+        inputPanel.add(bodyField);
+        inputPanel.add(new JLabel("Header Key:"));
+        inputPanel.add(headerKeyField);
+        inputPanel.add(new JLabel("Header Value:"));
+        inputPanel.add(headerValueField);
+        inputPanel.add(new JLabel(""));
+        inputPanel.add(addHeaderButton);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(new JScrollPane(headersArea), BorderLayout.CENTER);
+        add(new JScrollPane(responseArea), BorderLayout.SOUTH);
+        add(sendButton, BorderLayout.EAST);
+
+        // Add action listeners
+        sendButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sendRequest();
             }
+        });
 
-            sendRequest(server, port, method, endpoint, headers, body);
-
-            System.out.print("Send another request? (yes/no): ");
-            if (!scanner.nextLine().toLowerCase().equals("yes")) {
-                break;
+        addHeaderButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addHeader();
             }
-        }
-        scanner.close();
+        });
     }
 
-    public static void sendRequest(String server, int port, String method, String endpoint, Map<String, String> headers,
-            String body) {
-        try (Socket socket = new Socket(server, port);
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+    private void sendRequest() {
+        String server = serverField.getText().trim();
+        String method = methodBox.getSelectedItem().toString();
+        String endpoint = endpointField.getText().trim();
+        String body = bodyField.getText().trim();
 
-            // Building the request header
-            StringBuilder request = new StringBuilder();
-            request.append(method).append(" ").append(endpoint).append(" HTTP/1.1\r\n");
-            request.append("Host: ").append(server).append("\r\n");
+        new Thread(() -> {
+            try (Socket socket = new Socket(server, 8080);
+                    PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-            // Adding headers
-            for (Map.Entry<String, String> header : headers.entrySet()) {
-                request.append(header.getKey()).append(": ").append(header.getValue()).append("\r\n");
+                // Building the request header
+                StringBuilder request = new StringBuilder();
+                request.append(method).append(" ").append(endpoint).append(" HTTP/1.1\r\n");
+                request.append("Host: ").append(server).append("\r\n");
+
+                // Adding headers
+                for (Map.Entry<String, String> header : headers.entrySet()) {
+                    request.append(header.getKey()).append(": ").append(header.getValue()).append("\r\n");
+                }
+
+                if (!body.isEmpty()) {
+                    request.append("Content-Length: ").append(body.getBytes().length).append("\r\n");
+                }
+
+                request.append("\r\n");
+                request.append(body);
+
+                // Sending the request
+                out.print(request.toString());
+                out.flush();
+
+                // Reading the response
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = in.readLine()) != null) {
+                    response.append(line).append("\n");
+                }
+
+                // Update the response area in the UI
+                responseArea.setText(response.toString());
+
+            } catch (IOException e) {
+                responseArea.setText("Error in connecting or sending request: " + e.getMessage());
+                e.printStackTrace();
             }
+        }).start();
+    }
 
-            if (!body.isEmpty()) {
-                request.append("Content-Length: ").append(body.getBytes().length).append("\r\n");
-            }
-
-            request.append("\r\n");
-            request.append(body);
-
-            // Sending the request
-            out.print(request.toString());
-            out.flush();
-
-            // Reading the response
-            String line;
-            while ((line = in.readLine()) != null) {
-                System.out.println(line);
-            }
-
-        } catch (IOException e) {
-            System.err.println("Error in connecting or sending request: " + e.getMessage());
-            e.printStackTrace();
+    private void addHeader() {
+        String key = headerKeyField.getText().trim();
+        String value = headerValueField.getText().trim();
+        if (!key.isEmpty() && !value.isEmpty()) {
+            headers.put(key, value);
+            headersArea.append(key + ": " + value + "\n");
+            headerKeyField.setText("");
+            headerValueField.setText("");
         }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new MyHTTPClient().setVisible(true);
+            }
+        });
     }
 }
