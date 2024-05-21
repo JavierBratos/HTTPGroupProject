@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 public class HttpServer {
     private static final int DEFAULT_PORT = 8080;
     private static final String EXPECTED_API_KEY = "a123";
+    private API api = new API("localhost", 8080); // API instance
 
     private Map<String, Map<String, Handler>> routeHandlers = new HashMap<>();
 
@@ -95,11 +96,11 @@ public class HttpServer {
         int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
         HttpServer server = new HttpServer();
 
-        server.on("GET", "/alumnos", () -> API.handleGet("/alumnos"));
-        server.on("POST", "/alumnos", () -> API.handlePost("/alumnos", "{json body}"));
-        server.on("PUT", "/alumnos", () -> API.handlePut("/alumnos", "{json body}"));
-        server.on("DELETE", "/alumnos", () -> API.handleDelete("/alumnos"));
-        server.on("HEAD", "/alumnos", () -> API.handleHead("/alumnos"));
+        server.on("GET", "/alumnos", () -> server.api.handleGet("/alumnos"));
+        server.on("POST", "/alumnos", () -> server.api.handlePost("/alumnos", "{json body}"));
+        server.on("PUT", "/alumnos", () -> server.api.handlePut("/alumnos", "{json body}"));
+        server.on("DELETE", "/alumnos", () -> server.api.handleDelete("/alumnos"));
+        server.on("HEAD", "/alumnos", () -> server.api.handleHead("/alumnos"));
 
         server.start(port);
     }

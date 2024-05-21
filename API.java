@@ -3,7 +3,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class API {
-    private static DataServer dataServer = new DataServer(); // Data server instance.
+    private DataServer dataServer = new DataServer(); // Instance of DataServer
     private static final String CONTENT_TYPE_JSON = "application/json";
     private String server;
     private int port;
@@ -14,10 +14,8 @@ public class API {
         this.port = port;
     }
 
-    // Server-side Methods
-
     // Handle GET request
-    public static String handleGet(String endpoint) {
+    public String handleGet(String endpoint) {
         if ("/alumnos".equals(endpoint)) {
             return formatResponse(200, dataServer.printAllAlumnos(), CONTENT_TYPE_JSON);
         }
@@ -25,7 +23,7 @@ public class API {
     }
 
     // Handle POST request
-    public static String handlePost(String endpoint, String body) {
+    public String handlePost(String endpoint, String body) {
         if ("/alumnos".equals(endpoint)) {
             Alumno alumno = parseAlumno(body);
             dataServer.addAlumno(alumno);
@@ -39,7 +37,7 @@ public class API {
         if (endpoint.startsWith("/alumnos/")) {
             int id = Integer.parseInt(endpoint.split("/")[2]);
             Alumno updatedAlumno = parseAlumno(body);
-            dataServer.updateAlumno(updatedAlumno);
+            dataServer.updateAlumno(id, updatedAlumno);
             return formatResponse(200, "{\"message\":\"Alumno updated successfully\"}", CONTENT_TYPE_JSON);
         }
         return formatResponse(404, "{\"error\":\"Resource not found\"}", CONTENT_TYPE_JSON);
@@ -55,44 +53,33 @@ public class API {
         return formatResponse(404, "{\"error\":\"Resource not found\"}", CONTENT_TYPE_JSON);
     }
 
-    // Client-side Methods
-
-    // Get all Alumnos
-    public String getAlumnos() {
-        return sendRequest("GET", "/alumnos", null, new HashMap<>());
+    // Handle HEAD request
+    public String handleHead(String endpoint) {
+        if ("/alumnos".equals(endpoint)) {
+            String data = dataServer.printAllAlumnos();
+            String headers = "Content-Type: " + CONTENT_TYPE_JSON + "\r\n" +
+                    "Content-Length: " + data.getBytes().length;
+            return formatResponseHeadersOnly(200, headers);
+        }
+        return formatResponseHeadersOnly(404, "Content-Type: " + CONTENT_TYPE_JSON);
     }
 
-    // Add a new Alumno
-    public String addAlumno(String json) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", CONTENT_TYPE_JSON);
-        return sendRequest("POST", "/alumnos", json, headers);
-    }
-
-    // Update an existing Alumno
-    public String updateAlumno(int id, String json) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", CONTENT_TYPE_JSON);
-        return sendRequest("PUT", "/alumnos/" + id, json, headers);
-    }
-
-    // Delete an Alumno
-    public String deleteAlumno(int id) {
-        return sendRequest("DELETE", "/alumnos/" + id, null, new HashMap<>());
-    }
-
-    // Utility Methods
-
-    // Format HTTP response
-    private static String formatResponse(int statusCode, Object object, String contentType) {
+    // Format HTTP response with body
+    private String formatResponse(int statusCode, String content, String contentType) {
         return "HTTP/1.1 " + statusCode + " " + getStatusText(statusCode) + "\r\n" +
                 "Content-Type: " + contentType + "\r\n" +
                 "\r\n" +
-                object;
+                content;
+    }
+
+    // Format HTTP response headers only
+    private String formatResponseHeadersOnly(int statusCode, String headers) {
+        return "HTTP/1.1 " + statusCode + " " + getStatusText(statusCode) + "\r\n" +
+                headers + "\r\n\r\n";
     }
 
     // Parse JSON string to Alumno object
-    private static Alumno parseAlumno(String json) {
+    private Alumno parseAlumno(String json) {
         JSONObject jsonObject = new JSONObject(json);
         int id = jsonObject.getInt("id");
         String name = jsonObject.getString("name");
@@ -101,21 +88,17 @@ public class API {
         return new Alumno(id, name, lastname, phoneNumber);
     }
 
-    // Send HTTP request (placeholder for client HTTP interaction)
-    private String sendRequest(String method, String endpoint, String body, Map<String, String> headers) {
-        // Assuming MyHTTPClient has a static method sendRequest to handle HTTP requests
-        MyHTTPClient.sendRequest(this.server, this.port, method, endpoint, headers, body);
-        return "Response handled";
-    }
-
     // Get HTTP status text based on code
-    private static String getStatusText(int statusCode) {
+    private String getStatusText(int statusCode) {
         switch (statusCode) {
-            case 200: return "OK";
-            case 201: return "Created";
-            case 404: return "Not Found";
-            default:  return "Error";
+            case 200:
+                return "OK";
+            case 201:
+                return "Created";
+            case 404:
+                return "Not Found";
+            default:
+                return "Error";
         }
     }
 }
-
