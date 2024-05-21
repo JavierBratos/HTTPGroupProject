@@ -9,32 +9,45 @@ public class MyHTTPClient {
         String server = scanner.nextLine();
         System.out.print("Enter HTTP method (GET, POST, PUT, DELETE, HEAD): ");
         String method = scanner.nextLine().toUpperCase();
-        System.out.print("Enter endpoint: ");
+        System.out.print("Enter endpoint (e.g., /alumnos or /alumnos/1): ");
         String endpoint = scanner.nextLine();
         System.out.print("Enter body (if any, press Enter if none): ");
         String body = scanner.nextLine();
 
         API client = new API(server, 8080);
         String response = "";
-        switch (method) {
-            case "GET":
-                response = client.getAlumnos();
-                break;
-            case "POST":
-                response = client.addAlumno(body);
-                break;
-            case "PUT":
-                response = client.updateAlumno(Integer.parseInt(endpoint.split("/")[2]), body);
-                break;
-            case "DELETE":
-                response = client.deleteAlumno(Integer.parseInt(endpoint.split("/")[2]));
-                break;
-            case "HEAD":
-                response = client.headAlumnos(); // Adding support for HEAD method
-                break;
-            default:
-                System.out.println("Unsupported HTTP method.");
-                break;
+        try {
+            int id = endpoint.startsWith("/alumnos/") ? Integer.parseInt(endpoint.split("/")[2]) : -1;
+            switch (method) {
+                case "GET":
+                    response = client.handleGet(endpoint);
+                    break;
+                case "POST":
+                    response = client.handlePost(endpoint,body);
+                    break;
+                case "PUT":
+                    if(id != -1) {
+                        response = client.handlePut(endpoint, body);
+                    } else {
+                        response = "Invalid endpoint for PUT request.";
+                    }
+                    break;
+                case "DELETE":
+                    if(id != -1) {
+                        response = client.handleDelete(endpoint);
+                    } else {
+                        response = "Invalid endpoint for DELETE request.";
+                    }
+                    break;
+                case "HEAD":
+                    response = client.handleHead(endpoint);
+                    break;
+                default:
+                    response = "Unsupported HTTP method.";
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            response = "Error parsing ID in endpoint.";
         }
 
         System.out.println(response);
