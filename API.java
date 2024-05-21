@@ -1,13 +1,20 @@
 import org.json.JSONObject;
-import java.util.HashMap;
-import java.util.Map;
 
 public class API {
     private DataServer dataServer = new DataServer(); // Instance of DataServer
     private static final String CONTENT_TYPE_JSON = "application/json";
+    private String server;
+    private int port;
 
     // Constructor
     public API() {
+        this.dataServer = new DataServer();
+    }
+
+    // Constructor with server and port parameters
+    public API(String server, int port) {
+        this.server = server;
+        this.port = port;
         this.dataServer = new DataServer();
     }
 
