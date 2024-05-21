@@ -1,3 +1,4 @@
+
 /* 
 import java.io.*;
 import java.net.ServerSocket;
@@ -138,13 +139,15 @@ public class HttpServer {
 
     private void handleRequest(Socket socket) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
+                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
 
             String requestLine = reader.readLine();
-            if (requestLine == null || requestLine.isEmpty()) return;
+            if (requestLine == null || requestLine.isEmpty())
+                return;
 
             String[] tokens = requestLine.split(" ");
-            if (tokens.length < 3) return;
+            if (tokens.length < 3)
+                return;
 
             String method = tokens[0];
             String endpoint = tokens[1];
@@ -197,7 +200,11 @@ public class HttpServer {
 
     // Extract the body from headers and body data if present
     private String extractBody(String headersAndBody) {
-        return headersAndBody.substring(headersAndBody.indexOf("\r\n\r\n") + 4);
+        // String a = headersAndBody.substring(
+        int index = headersAndBody.indexOf("id");
+        // int c = index + 4;
+        String a = headersAndBody.substring(index).trim();
+        return a;
     }
 
     public static void main(String[] args) {

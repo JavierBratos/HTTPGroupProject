@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class MyHTTPClient {
-    private static final String API_KEY = "123";  // This should be your actual API key
+    private static final String API_KEY = "123"; // This should be your actual API key
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -25,7 +25,7 @@ public class MyHTTPClient {
             String body = scanner.nextLine();
 
             Map<String, String> headers = new HashMap<>();
-            headers.put("Content-Type", "application/json"); // Assuming JSON, change as needed
+            headers.put("Content-Type", "text/plain");
             headers.put("X-API-Key", API_KEY);
 
             System.out.print("Enter additional headers? (yes/no): ");
@@ -51,10 +51,11 @@ public class MyHTTPClient {
         scanner.close();
     }
 
-    public static void sendRequest(String server, int port, String method, String endpoint, Map<String, String> headers, String body) {
+    public static void sendRequest(String server, int port, String method, String endpoint, Map<String, String> headers,
+            String body) {
         try (Socket socket = new Socket(server, port);
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
             // Building the request header
             StringBuilder request = new StringBuilder();
