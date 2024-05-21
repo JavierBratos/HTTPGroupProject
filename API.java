@@ -5,19 +5,16 @@ import java.util.Map;
 public class API {
     private DataServer dataServer = new DataServer(); // Instance of DataServer
     private static final String CONTENT_TYPE_JSON = "application/json";
-    private String server;
-    private int port;
 
-    // Constructor for client-side usage
-    public API(String server, int port) {
-        this.server = server;
-        this.port = port;
+    // Constructor
+    public API() {
+        this.dataServer = new DataServer();
     }
 
     // Handle GET request
     public String handleGet(String endpoint) {
         if ("/alumnos".equals(endpoint)) {
-            return formatResponse(200, dataServer.printAllAlumnos(), CONTENT_TYPE_JSON);
+            return formatResponse(200, dataServer.getAllAlumnos(), CONTENT_TYPE_JSON);
         }
         return formatResponse(404, "{\"error\":\"Resource not found\"}", CONTENT_TYPE_JSON);
     }
@@ -56,7 +53,7 @@ public class API {
     // Handle HEAD request
     public String handleHead(String endpoint) {
         if ("/alumnos".equals(endpoint)) {
-            String data = dataServer.printAllAlumnos();
+            String data = dataServer.getAllAlumnos();
             String headers = "Content-Type: " + CONTENT_TYPE_JSON + "\r\n" +
                     "Content-Length: " + data.getBytes().length;
             return formatResponseHeadersOnly(200, headers);
@@ -100,5 +97,25 @@ public class API {
             default:
                 return "Error";
         }
+    }
+
+    public String getAlumnos() {
+        return handleGet("/alumnos");
+    }
+
+    public String addAlumno(String body) {
+        return handlePost("/alumnos", body);
+    }
+
+    public String updateAlumno(int id, String body) {
+        return handlePut("/alumnos/" + id, body);
+    }
+
+    public String deleteAlumno(int id) {
+        return handleDelete("/alumnos/" + id);
+    }
+
+    public String headAlumnos() {
+        return handleHead("/alumnos");
     }
 }

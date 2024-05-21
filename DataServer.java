@@ -1,5 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class DataServer {
     private Map<Integer, Alumno> alumnosDatabase;
@@ -31,10 +33,16 @@ public class DataServer {
     }
 
     // Method GET
-    public void printAllAlumnos() {
+    public String getAllAlumnos() {
+        JSONArray jsonArray = new JSONArray();
         for (Alumno alumno : alumnosDatabase.values()) {
-            System.out.println("Alumno ID: " + alumno.getId() + ", Name: " + alumno.getName() +
-                    ", Lastname: " + alumno.getLastname() + ", Phone: " + alumno.getPhoneNumber());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", alumno.getId());
+            jsonObject.put("name", alumno.getName());
+            jsonObject.put("lastname", alumno.getLastname());
+            jsonObject.put("phoneNumber", alumno.getPhoneNumber());
+            jsonArray.put(jsonObject);
         }
+        return jsonArray.toString();
     }
 }
